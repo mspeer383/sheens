@@ -1,0 +1,70 @@
+name: time
+doc: |
+  This spec demonstrates use of an implicit timer specified with a
+  branch pattern. In this example, the branch pattern ("after":"1s"}
+  means that a 1-second timer will be started when the machine
+  transitions to that node.  At that point, the machine needs a
+  message to proceed as is normal with a message-based branching node.
+
+  If the timer fires, it offers the message {"after":"1s"} to the
+  machine.  This message matches the branch with that pattern, and the
+  machine transitions to the branch's target.  If instead the message
+  {"receive":"tacos"} arrives before the timer is fired, that branch
+  is taken and the timer is automatically cancelled.
+
+  Using this (optional, switch-controlled) behavior, you don't need to
+  make a timer or cancel a timer explicitly.  All of this behavior is
+  provided outside of Sheens Core, so you as Sheens Core user can do
+  all, some, or none of this as you desire.
+patternsyntax: json
+nodes:
+  start:
+    doc: Wait for a message that we've arrived at the food truck.
+    branching:
+      type: message
+      branches:
+      - pattern: |
+          {"arrive":true}
+        target: order
+  order:
+    doc: Order some delicious tacos.
+    action:
+      interpreter: goja
+      source: |-
+        _.out({"order":"tacos"});
+        return _.bindings;
+    branching:
+      branches:
+      - target: wait
+  wait:
+    doc: Wait to get our tacos (with a timeout).
+    branching:
+      type: message
+      branches:
+      - pattern: |
+          {"receive":"tacos"}
+        target: eat
+      - pattern: |
+          {"after":"1s"}
+        target: timeout
+  eat:
+    doc: Enjoy delicious tacos.
+    action:
+      interpreter: goja
+      source: |-
+        _.out({"eating": "tacos"});
+        return _.bindings;
+    branching:
+      branches:
+      - target: start
+  timeout:
+    doc: Somebody else took our tacos. Reorder.
+    action:
+      interpreter: goja
+      source: |-
+        _.out({"reorder": "tacos"});
+        return _.bindings;
+    branching:
+      branches:
+      - target: wait
+        

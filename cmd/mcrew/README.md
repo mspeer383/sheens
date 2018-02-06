@@ -98,6 +98,16 @@ hasn't fired):
 {"to":"timers","deleteTimer":"1"}
 ```
 
+### Implicit timers
+
+If `mcrew` is started with the flag `-i`, then the process supports
+experimental implicit timers.  See the comments in
+[`implicit-timers.go`](implicit-timers.go), the example specs
+[`implicit-timers.yaml`](../../specs/implicit-timers.yaml) and
+[`implicit-timers-exp.yaml`](../../specs/implicit-timers-exp.yaml),
+and this [example input](implicit-timers.txt).
+
+
 ### HTTP service
 
 Messages like

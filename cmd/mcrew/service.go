@@ -18,11 +18,12 @@ import (
 )
 
 type Service struct {
-	ProcessCtl *core.Control
-	Emitted    chan interface{}
-	Processing chan interface{}
-	Errors     chan interface{} // Should be error
-	Tracing    bool
+	ProcessCtl     *core.Control
+	Emitted        chan interface{}
+	Processing     chan interface{}
+	Errors         chan interface{} // Should be error
+	Tracing        bool
+	ImplicitTimers bool
 
 	ops chan interface{}
 
@@ -229,9 +230,12 @@ func (s *Service) Process(ctx context.Context, msg interface{}, ctl *core.Contro
 		}
 		processed[mid] = walked
 
+		s.considerWalked(ctx, mid, spec, walked)
+
 		if to := walked.To(); to != nil {
 			states[mid] = to.Copy()
 		}
+
 	}
 
 	// Gather and write out machine changes.

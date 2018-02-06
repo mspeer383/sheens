@@ -28,10 +28,11 @@ func main() {
 		libDir   = flag.String("l", "libs", "libraries directory")
 		bootFile = flag.String("b", "", "file to read for initial ops")
 
-		httpPort  = flag.String("h", "", "HTTP port for our service")
-		wsService = flag.Bool("w", true, "WebSockets service")
-		httpDir   = flag.String("f", "", "directory to serve via HTTP")
-		tcpPort   = flag.String("t", ":9000", "port for out TCP listener")
+		httpPort       = flag.String("h", "", "HTTP port for our service")
+		wsService      = flag.Bool("w", true, "WebSockets service")
+		httpDir        = flag.String("f", "", "directory to serve via HTTP")
+		tcpPort        = flag.String("t", ":9000", "port for out TCP listener")
+		implicitTimers = flag.Bool("i", false, "support implicit timers")
 
 		wsClient = flag.String("c", "", "web socket service for client") // ws://localhost:8123/api/websocket
 
@@ -55,6 +56,7 @@ func main() {
 	s.Emitted = make(chan interface{}, 8)
 	s.Processing = make(chan interface{}, 8)
 	s.Errors = make(chan interface{}, 8)
+	s.ImplicitTimers = *implicitTimers
 
 	if Verbose {
 		monitor(ctx, s.Processing, "processing", false)

@@ -1,0 +1,58 @@
+name: timeexp
+doc: |
+  This spec demonstrates use of implicit timers with timer duration
+  controlled by a binding.  In particular, this specification
+  demonstrates exponential backoff using implicit timers.
+  
+patternsyntax: json
+nodes:
+  start:
+    branching:
+      type: message
+      branches:
+      - pattern: |
+          {"arrive":true}
+        target: order
+  order:
+    action:
+      interpreter: goja
+      source: |-
+        _.out({"order":"tacos"});
+        // Our starting timeout is 1 (second).
+        _.bindings["?timeout"] = 1;
+        return _.bindings;
+    branching:
+      branches:
+      - target: wait
+  wait:
+    branching:
+      type: message
+      branches:
+      - pattern: |
+          {"receive":"tacos"}
+        target: eat
+      - pattern: |
+          {"after":"?timeout"}
+        target: timeout
+  eat:
+    action:
+      interpreter: goja
+      source: |-
+        _.out({"eating": "tacos"});
+        return _.bindings;
+    branching:
+      branches:
+      - target: start
+  timeout:
+    action:
+      interpreter: goja
+      source: |-
+        _.out({"reorder": "tacos"});
+        var timeout = _.bindings["?timeout"];
+        // Back off.
+        _.bindings["?timeout"] = timeout * 2;
+        return _.bindings;
+    branching:
+      branches:
+      - target: wait
+        
