@@ -10,8 +10,6 @@ import (
 	"log"
 	"sync"
 	"time"
-
-	. "github.com/Comcast/sheens/util/testutil"
 )
 
 type Emitter func(ctx context.Context, message interface{}) error
@@ -83,34 +81,28 @@ func (ts *Timers) Add(ctx context.Context, id string, message interface{}, in ti
 
 	ts.timers[id] = te
 
-	stop := func() {
-		if err := ts.Rem(ctx, id); err != nil {
-			ts.err(fmt.Errorf("Timers rem error %v id=%s", err, id))
-
-		}
+	remove := func() {
+		ts.Lock()
+		delete(ts.timers, id)
+		ts.Unlock()
 	}
 
 	go func() {
 		timer := time.NewTimer(te.At.Sub(time.Now()))
 		select {
 		case <-ctx.Done():
-			stop()
+			remove()
 		case <-te.ctl:
-			// We only get here via a Rem() call.
+			remove()
 		case <-ts.ctl:
-			stop()
+			remove()
 
 			// Not exactly what we want ...
 		case <-timer.C:
-			Logf("Timers firing %s", JS(ts))
+			remove()
 			if err := ts.emit(ctx, te.Message); err != nil {
 				ts.err(fmt.Errorf("Timers emit error %v id=%s", err, id))
 			}
-
-			// See https://github.com/Comcast/sheens/issues/19
-			ts.Lock()
-			delete(ts.timers, id)
-			ts.Unlock()
 		}
 	}()
 
@@ -131,6 +123,7 @@ func (ts *Timers) Rem(ctx context.Context, id string) error {
 		return NotFound
 	}
 
+	// Delete this entry while holding the lock.
 	delete(ts.timers, id)
 
 	close(te.ctl)
