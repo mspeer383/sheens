@@ -1,0 +1,5 @@
+{"cop":{"add":{"m":{"id":"time","spec":{"name":"implicit-timer-exp"},"state":{"bs":{"timeout":1}}}}}}
+{"cop":{"process":{"message":{"to":"time","arrive":true}}}}
+sleep 7s
+{"cop":{"process":{"message":{"to":"time","receive":"tacos"}}}}
+sleep 10s
